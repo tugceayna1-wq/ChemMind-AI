@@ -2,6 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 import pandas as pd
 from datetime import datetime
+import time
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wide")
@@ -85,6 +86,7 @@ if prompt := st.chat_input("Deney tasarımın hakkında bir şeyler yaz..."):
     # 2. AI yanıtını oluştur
     with st.chat_message("assistant"):
         with st.spinner("Hocanız analiz ediyor..."):
+            time.sleep(5)
             response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
             full_response = response.text
             st.markdown(full_response)
