@@ -144,20 +144,20 @@ GÖREVİN VE TARZIN:
 """
 
 # --- ANA EKRAN ---
-st.title("🔬 ChemMind AI: İnteraktif Deney Tasarım Laboratuvarı")
-st.caption("🚀 Güvenli, yaratıcı ve bilimsel deneyler tasarlamak için yapay zeka destekli rehberiniz.")
+st.title("🔬 ChemMind AI: İnteraktif Kimya Laboratuvarı")
+st.caption("")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Laboratuvar asistanına bir şey sor..."):
+if prompt := st.chat_input("Yaz gitsin, çözeriz (büyük ihtimalle)"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Asistanınız yazıyor..."):
+        with st.spinner("ChemMind Düşünüyor..."):
             time.sleep(3) 
             response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
             full_response = response.text
