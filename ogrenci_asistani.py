@@ -34,7 +34,9 @@ model = genai.GenerativeModel('gemini-2.5-flash')
 # --- SOHBET HAFIZASI (Session State) ---
 # Temizle butonu düzgün çalışsın diye bunu sayfanın başına alıyoruz
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "assistant", "content": "👋 Merhaba! Ben ChemMind AI, senin kişisel laboratuvar asistanınım. Sol menüden bilgilerini doldurup deney konunu seçtiysen başlayabiliriz. Bugün aklında nasıl bir deney tasarımı var veya hangi konuda yardıma ihtiyacın var?"}
+    ]
 
 # --- SIDEBAR: ÖĞRENCİ BİLGİLERİ VE BUTONLAR ---
 with st.sidebar:
