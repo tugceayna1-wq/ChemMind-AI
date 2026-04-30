@@ -7,18 +7,41 @@ import time  # Kota hatasını önlemek için zaman modülü
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wide")
 
-# --- ÖZEL STİL (CSS) ---
+# --- ÖZEL STİL (CSS) - LABORATUVAR TEMASI ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stAlert { border-radius: 10px; }
-    .report-box { 
-        background-color: #ffffff; 
-        padding: 20px; 
-        border: 1px solid #dee2e6; 
-        border-radius: 15px;
-        border-left: 8px solid #28a745;
+    /* 1. Ana Arka Plan: Açık mavi tonu ve şeffaf laboratuvar erleni deseni */
+    .stApp {
+        background-color: #e6f3ff; 
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" opacity="0.04" viewBox="0 0 100 100"><path d="M45 20h10v20l15 30H30l15-30V20z" fill="%230050b3"/><circle cx="50" cy="55" r="3" fill="%23ffffff"/><circle cx="45" cy="62" r="2" fill="%23ffffff"/></svg>');
+        background-size: 90px 90px;
     }
+    
+    /* 2. Yan Menü (Sidebar): Temiz ve ferah görünmesi için beyaz arka plan */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 2px solid #cce6ff;
+    }
+
+    /* 3. Sohbet Balonları: Arka plandan ayrılsın diye beyaz, yuvarlak hatlı ve hafif gölgeli */
+    .stChatMessage {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 10px 20px;
+        margin-bottom: 15px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.03);
+        border: 1px solid #cce6ff;
+    }
+
+    /* 4. Metin Yazma Kutusu: Ana temaya uygun mavi çerçeve */
+    [data-testid="stChatInput"] {
+        border: 2px solid #99ccff;
+        border-radius: 15px;
+        background-color: #ffffff;
+    }
+    
+    /* Üstteki varsayılan kırmızı çizgiyi gizleme */
+    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
