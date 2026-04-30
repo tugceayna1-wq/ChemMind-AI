@@ -1,8 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
-import pandas as pd
 from datetime import datetime
-import time  # Kota hatasını önlemek için zaman modülü
+import time
+from docx import Document  # Word dosyası oluşturmak için eklendi
+import io                  # Dosyayı indirmeye hazırlamak için eklendi
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wide")
@@ -10,7 +11,6 @@ st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wid
 # --- ÖZEL STİL (CSS) ---
 st.markdown("""
     <style>
-    /* Temiz ve okunaklı varsayılan görünüm */
     .stAlert { border-radius: 10px; }
     .report-box { 
         background-color: #ffffff; 
@@ -22,7 +22,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- API AYARLARI (GÜVENLİ YÖNTEM) ---
+# --- API AYARLARI ---
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
@@ -31,17 +31,9 @@ except:
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# --- SOHBET HAFIZASI (Session State) ---
-# Temizle butonu düzgün çalışsın diye bunu sayfanın başına alıyoruz
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "👋 Merhaba! Ben ChemMind AI, senin kişisel laboratuvar asistanınım. Sol menüden bilgilerini doldurup deney konunu seçtiysen başlayabiliriz. Bugün aklında nasıl bir deney tasarımı var veya hangi konuda yardıma ihtiyacın var?"}
-    ]
-
 # --- SOHBET HAFIZASI VE GEÇMİŞ SOHBETLER ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
-# YENİ: Geçmiş sohbetleri tutacağımız hafıza listesi
 if "past_chats" not in st.session_state:
     st.session_state.past_chats = []
 
@@ -67,7 +59,6 @@ with st.sidebar:
     
     st.divider()
     
-    # Seçimi Onaylama Butonu
     if st.button("✅ Seçimi Onayla ve Başla", use_container_width=True):
         st.toast(f"{exp_title} konusu aktif edildi!", icon="🎯")
         isim_hitap = f" {std_name}" if std_name else ""
@@ -78,13 +69,11 @@ with st.sidebar:
         
     st.divider()
 
-    # --- YENİ: GEÇMİŞ SOHBETLER PANELİ ---
     with st.expander("📂 Geçmiş Sohbetlerim", expanded=False):
         if len(st.session_state.past_chats) == 0:
             st.info("Henüz arşivlenmiş sohbetin yok.")
         else:
             for idx, chat in enumerate(st.session_state.past_chats):
-                # Arşivdeki sohbete tıklanınca onu ekrana geri yükle
                 if st.button(f"🕒 {chat['tarih']} - {chat['konu']}", key=f"past_{idx}", use_container_width=True):
                     st.session_state.messages = chat['mesajlar']
                     st.toast("Arşivdeki sohbet yüklendi!", icon="📂")
@@ -92,7 +81,6 @@ with st.sidebar:
 
     st.divider()
     
-    # --- TEMİZLE VE ARŞİVLE BUTONLARI ---
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🗑️ Temizle", use_container_width=True):
@@ -102,38 +90,48 @@ with st.sidebar:
     with col2:
         if st.button("📁 Arşivle", use_container_width=True):
             if st.session_state.messages:
-                # Mevcut sohbeti arşiv listesine ekle
                 st.session_state.past_chats.append({
                     "tarih": datetime.now().strftime("%H:%M"),
                     "konu": exp_title,
                     "mesajlar": st.session_state.messages.copy()
                 })
-                # Ekranı yeni sohbet için temizle
                 st.session_state.messages = []
                 st.toast("Sohbet başarıyla arşive kaldırıldı!", icon="✅")
                 st.rerun()
 
-    # --- EXCEL İNDİRME BUTONU ---
+    # --- YENİ: WORD İNDİRME BUTONU ---
     if st.session_state.messages:
-        data = {
-            "Zaman": [datetime.now().strftime("%Y-%m-%d %H:%M")],
-            "Ogrenci": [std_name],
-            "No": [std_id],
-            "Konu": [exp_title],
-            "Sohbet_Gecmisi": [str(st.session_state.messages)]
-        }
-        df = pd.DataFrame(data)
-        csv = df.to_csv(index=False).encode('utf-8-sig')
+        # Word belgesini arka planda kodla oluşturuyoruz
+        doc = Document()
+        doc.add_heading('ChemMind AI - Öğrenci Sohbet Raporu', 0)
+        doc.add_paragraph(f"Öğrenci Adı: {std_name}")
+        doc.add_paragraph(f"Öğrenci No: {std_id}")
+        doc.add_paragraph(f"Çalışılan Konu: {exp_title}")
+        doc.add_paragraph(f"Tarih ve Saat: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        
+        doc.add_heading('Sohbet Geçmişi', level=1)
+        
+        # Ekrandaki mesajları Word formatına dönüştür
+        for msg in st.session_state.messages:
+            role_name = "Öğrenci" if msg["role"] == "user" else "ChemMind AI"
+            p = doc.add_paragraph()
+            p.add_run(f"{role_name}: ").bold = True
+            p.add_run(msg["content"])
+            
+        # Dosyayı indirmeye hazırla
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
         
         st.download_button(
-            label="📥 Excel Olarak İndir (Tez İçin)",
-            data=csv,
-            file_name=f"{std_id}_sohbet_kaydi.csv",
-            mime="text/csv",
+            label="📄 Word Olarak İndir",
+            data=buffer,
+            file_name=f"{std_name}_{exp_title}_Raporu.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True
         )
 
-# --- SİSTEM TALİMATI (GENİŞLETİLMİŞ VE ÇOK YÖNLÜ ÖĞRETMEN) ---
+# --- SİSTEM TALİMATI ---
 sistem_promptu = f"""
 Sen destekleyici, zeki ve deneyimli bir Kimya Öğretmenisin. Öğrencinin adı {std_name}.
 İlgilendiğiniz genel konu: '{exp_title}'.
@@ -146,25 +144,21 @@ GÖREVİN VE TARZIN:
 """
 
 # --- ANA EKRAN ---
-st.title("🔬 ChemMind AI: İnteraktif Kimya Laboratuvarı")
+st.title("🔬 ChemMind AI: İnteraktif Deney Tasarım Laboratuvarı")
+st.caption("🚀 Güvenli, yaratıcı ve bilimsel deneyler tasarlamak için yapay zeka destekli rehberiniz.")
 
-# Geçmiş mesajları ekrana bas
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Sohbet girişi
-if prompt := st.chat_input("Yaz gitsin, çözeriz (büyük ihtimalle)"):
-    # 1. Kullanıcı mesajını kaydet ve göster
+if prompt := st.chat_input("Laboratuvar asistanına bir şey sor..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. AI yanıtını oluştur
     with st.chat_message("assistant"):
-        with st.spinner("ChemMind Düşünüyor..."):
-            # Kota hatasını önlemek için 5 saniye bekletiyoruz
-            time.sleep(5) 
+        with st.spinner("Asistanınız yazıyor..."):
+            time.sleep(3) 
             response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
             full_response = response.text
             st.markdown(full_response)
