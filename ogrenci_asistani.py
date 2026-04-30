@@ -112,7 +112,7 @@ if prompt := st.chat_input("Deney tasarımın hakkında bir şeyler yaz..."):
 
     # 2. AI yanıtını oluştur
     with st.chat_message("assistant"):
-        with st.spinner("Hocanız analiz ediyor (Kota koruması devrede)..."):
+        with st.spinner("ChemMind Düşünüyor..."):
             # Kota hatasını önlemek için 5 saniye bekletiyoruz
             time.sleep(5) 
             response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
