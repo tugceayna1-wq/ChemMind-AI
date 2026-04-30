@@ -1,82 +1,120 @@
 import streamlit as st
 import google.generativeai as genai
+import pandas as pd
+from datetime import datetime
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="ChemMind AI - Deney Asistanı", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wide")
 
-# --- ÖZEL TASARIM (CSS) ---
+# --- ÖZEL STİL (CSS) ---
 st.markdown("""
     <style>
-    .main { background-color: #f5f7f9; }
-    .stButton>button {
-        width: 100%;
-        border-radius: 10px;
-        height: 3em;
-        background-color: #007bff;
-        color: white;
-        font-weight: bold;
-    }
-    .stTextArea>div>div>textarea { border-radius: 15px; }
-    .teacher-box {
-        background-color: #ffffff;
-        padding: 20px;
-        border-left: 5px solid #007bff;
-        border-radius: 10px;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+    .main { background-color: #f8f9fa; }
+    .stAlert { border-radius: 10px; }
+    .report-box { 
+        background-color: #ffffff; 
+        padding: 20px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 15px;
+        border-left: 8px solid #28a745;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- API AYARLARI ---
-genai.configure(api_key="AIzaSyDwEqF1yzVghjR7tZynrmCUKwYjO2khSNo")
+# --- API AYARLARI (GÜVENLİ YÖNTEM) ---
+# Streamlit Cloud'da "Advanced Settings > Secrets" kısmına GEMINI_API_KEY eklemeyi unutma!
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except:
+    API_KEY = "BURAYA_GECICI_OLARAK_ANAHTARINI_YAZABILIRSIN" # Ama GitHub'da gizle!
+
+genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# --- YAN MENÜ (SIDEBAR) ---
+# --- SIDEBAR: ÖĞRENCİ BİLGİLERİ ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3022/3022607.png", width=100)
-    st.title("Laboratuvar Rehberi")
-    st.info("""
-    **Nasıl Kullanılır?**
-    1. Deney fikrini yaz.
-    2. Değişkenlerini belirt.
-    3. 'Analiz Et' butonuna bas.
-    """)
+    st.image("https://cdn-icons-png.flaticon.com/512/3022/3022607.png", width=80)
+    st.title("🎓 Öğrenci Paneli")
+    
+    std_name = st.text_input("Adınız Soyadınız:")
+    std_id = st.text_input("Öğrenci Numaranız:")
+    exp_title = st.selectbox("Deney Konusu:", [
+        "Reaksiyon Hızı", 
+        "Asit-Baz Titrasyonu", 
+        "Çözünürlük Dengesi", 
+        "Elektroliz",
+        "Diğer"
+    ])
+    
     st.divider()
-    st.warning("⚠️ Güvenlik İlkemiz: Önlük ve gözlük takmayı unutmayın!")
+    if st.button("Sohbeti Temizle"):
+        st.session_state.messages = []
+        st.rerun()
+
+# --- SİSTEM TALİMATI (PROMPT MÜHENDİSLİĞİ) ---
+sistem_promptu = f"""
+Sen uzman bir Kimya Eğitimi profesörüsün. Öğrencinin adı {std_name}.
+Görevin, öğrencinin '{exp_title}' konusu üzerine tasarladığı deneyi analiz etmek.
+ANALİZ KRİTERLERİN:
+1. Değişkenler: Bağımlı, bağımsız ve kontrol değişkenleri doğru mu?
+2. Güvenlik: Kimyasal tehlikeler belirtilmiş mi?
+3. Bilimsel Yöntem: Deney adımları mantıklı mı?
+
+KURAL: Cevabı doğrudan verme! Hataları bulup öğrenciye "Neden böyle düşündün?" gibi yönlendirici sorular sor.
+"""
 
 # --- ANA EKRAN ---
-col1, col2 = st.columns([2, 1])
+st.title("🔬 ChemMind AI: İnteraktif Deney Tasarım Laboratuvarı")
 
-with col1:
-    st.title("🧪 ChemMind AI")
-    st.caption("Genel Kimya Deney Tasarımı ve Analiz Platformu")
+# Sohbet geçmişini tutmak için session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Geçmiş mesajları ekrana bas
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Sohbet girişi
+if prompt := st.chat_input("Deney tasarımın hakkında bir şeyler yaz..."):
+    # 1. Kullanıcı mesajını kaydet ve göster
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # 2. AI yanıtını oluştur
+    with st.chat_message("assistant"):
+        with st.spinner("Hocanız analiz ediyor..."):
+            response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
+            full_response = response.text
+            st.markdown(full_response)
     
-    ogrenci_input = st.text_area(
-        "Deney Tasarımını Buraya Detaylıca Yaz:",
-        placeholder="Örn: Sıcaklığın reaksiyon hızına etkisini ölçmek için 3 farklı sıcaklıkta...",
-        height=250
-    )
-    
-    submit = st.button("Deneyimi Analiz Et 🚀")
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-with col2:
-    st.write("### 📚 Kaynaklar & İpuçları")
-    st.markdown("- **Bağımlı Değişken:** Ölçtüğün şey.")
-    st.markdown("- **Bağımsız Değişken:** Değiştirdiğin şey.")
-    st.markdown("- **Kontrol:** Sabit tuttukların.")
-
-# --- ANALİZ SONUCU ---
-if submit:
-    if ogrenci_input:
-        with st.status("Hocanız metni inceliyor...", expanded=True) as status:
-            st.write("Kimyasal denklemler kontrol ediliyor...")
-            
-            sistem_mesaji = "Sen bir kimya öğretmenisin. Öğrenciye rehberlik et, hataları bul ve güvenliği hatılat."
-            response = model.generate_content(f"{sistem_mesaji}\n\nÖğrenci: {ogrenci_input}")
-            
-            status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
+# --- VERİ DIŞA AKTARMA (TEZ İÇİN) ---
+st.divider()
+if st.session_state.messages:
+    st.subheader("📊 Tez Verisi Hazırla")
+    if st.button("Tüm Sohbeti Kaydet ve Rapor Oluştur"):
+        # Verileri DataFrame'e çevir
+        data = {
+            "Zaman": [datetime.now().strftime("%Y-%m-%d %H:%M")],
+            "Ogrenci": [std_name],
+            "No": [std_id],
+            "Konu": [exp_title],
+            "Sohbet_Gecmisi": [str(st.session_state.messages)]
+        }
+        df = pd.DataFrame(data)
         
-        st.markdown('### 👨‍🏫 Hocanın Notu:')
+        # Excel/CSV indir
+        csv = df.to_csv(index=False).encode('utf-8-sig')
+        st.download_button(
+            label="📥 Excel Verisini İndir (.csv)",
+            data=csv,
+            file_name=f"{std_id}_deney_analizi.csv",
+            mime="text/csv"
+        )
+        st.success("Veriler tezin için hazırlandı! Bilgisayarına indirebilirsin.")
         st.markdown(f'<div class="teacher-box">{response.text}</div>', unsafe_allow_html=True)
     else:
         st.error("Lütfen bir deney tasarımı metni giriniz.")
