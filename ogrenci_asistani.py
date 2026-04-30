@@ -64,7 +64,7 @@ KURAL: Cevabı doğrudan verme! Hataları bulup öğrenciye "Neden böyle düş�
 """
 
 # --- ANA EKRAN ---
-st.title("🔬 ChemMind AI: İnteraktif Deney Tasarım Laboratuvarı")
+st.title("🔬 ChemMind AI: İnteraktif Kimya Laboratuvarı")
 
 # Sohbet geçmişini tutmak için session state
 if "messages" not in st.session_state:
