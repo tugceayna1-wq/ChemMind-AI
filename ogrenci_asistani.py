@@ -121,7 +121,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Sohbet girişi
-if prompt := st.chat_input("Deney tasarımın hakkında bir şeyler yaz..."):
+if prompt := st.chat_input("Yaz gitsin, çözeriz (büyük ihtimalle) 🤓..."):
     # 1. Kullanıcı mesajını kaydet ve göster
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
