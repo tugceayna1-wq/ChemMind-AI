@@ -45,12 +45,17 @@ with st.sidebar:
     
     std_name = st.text_input("Adınız Soyadınız:")
     std_id = st.text_input("Öğrenci Numaranız:")
-    exp_title = st.selectbox("Deney Konusu:", [
-        "Reaksiyon Hızı", 
-        "Asit-Baz Titrasyonu", 
-        "Çözünürlük Dengesi", 
-        "Elektroliz",
-        "Diğer"
+    exp_title = st.selectbox("Konu Başlığı:", [
+        "Atom ve Periyodik Sistem",
+        "Kimyasal Bağlar ve Molekül Geometrisi",
+        "Kimyasal Hesaplamalar",
+        "Maddenin Halleri",
+        "Sıvı Çözeltiler ve Çözünürlük",
+        "Kimyasal Tepkimelerde Enerji",
+        "Kimyasal Tepkimelerde Hız",
+        "Kimyasal Tepkimelerde Denge",
+        "Asitler-Bazlar-Tuzlar",
+        "Elektrokimya"
     ])
     
     st.divider()
