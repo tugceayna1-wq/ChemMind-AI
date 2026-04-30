@@ -120,4 +120,3 @@ if prompt := st.chat_input("Deney tasarımın hakkında bir şeyler yaz..."):
             st.markdown(full_response)
     
     st.session_state.messages.append({"role": "assistant", "content": full_response})
-        st.error("Lütfen bir deney tasarımı metni giriniz.")
