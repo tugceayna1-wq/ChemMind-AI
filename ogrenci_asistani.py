@@ -39,7 +39,7 @@ if "past_chats" not in st.session_state:
 
 # --- SIDEBAR: ÖĞRENCİ BİLGİLERİ VE BUTONLAR ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3022/3022607.png", width=80)
+    st.image("https://cdn-icons-png.flaticon.com/512/1046/1046269.png", width=150)
     st.title("🎓 Öğrenci Paneli")
     
     std_name = st.text_input("Adınız Soyadınız:")
