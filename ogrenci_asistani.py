@@ -60,18 +60,29 @@ with st.sidebar:
     
     st.divider()
     
-    # Butonları yan yana koymak için 2 sütun oluşturuyoruz
-    col1, col2 = st.columns(2)
+    # YENİ: Seçimi Onaylama Butonu
+    if st.button("✅ Seçimi Onayla ve Başla", use_container_width=True):
+        # Sağ alttan çıkan şık bildirim
+        st.toast(f"{exp_title} konusu aktif edildi!", icon="🎯")
+        
+        # Yapay zekanın ilk mesajını öğrenciye ve seçtiği konuya özel olarak ayarla
+        isim_hitap = f" {std_name}" if std_name else ""
+        st.session_state.messages = [
+            {"role": "assistant", "content": f"👋 Merhaba{isim_hitap}! **{exp_title}** konusunu seçtiğini görüyorum. Harika bir seçim. Bu konuyla ilgili bir deney mi tasarlamak istersin, yoksa kafana takılan teorik bir kavramı mı tartışalım?"}
+        ]
+        st.rerun() # Ekranı yenile
+        
+    st.divider()
     
+    # Temizle ve Kaydet Butonları (Yan yana)
+    col1, col2 = st.columns(2)
     with col1:
         if st.button("🗑️ Temizle"):
             st.session_state.messages = []
             st.rerun()
 
     with col2:
-        # Sadece mesaj varsa Kaydet butonunu göster
         if st.session_state.messages:
-            # Veriyi arka planda hazırla
             data = {
                 "Zaman": [datetime.now().strftime("%Y-%m-%d %H:%M")],
                 "Ogrenci": [std_name],
@@ -82,7 +93,6 @@ with st.sidebar:
             df = pd.DataFrame(data)
             csv = df.to_csv(index=False).encode('utf-8-sig')
             
-            # Doğrudan İndirme Butonu
             st.download_button(
                 label="💾 Kaydet",
                 data=csv,
