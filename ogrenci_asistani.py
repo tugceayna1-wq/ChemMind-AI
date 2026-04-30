@@ -113,7 +113,7 @@ GÖREVİN VE TARZIN:
 """
 
 # --- ANA EKRAN ---
-st.title("🔬 ChemMind AI: İnteraktif Deney Tasarım Laboratuvarı")
+st.title("🔬 ChemMind AI: İnteraktif Kimya Laboratuvarı")
 
 # Geçmiş mesajları ekrana bas
 for message in st.session_state.messages:
