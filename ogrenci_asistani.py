@@ -38,6 +38,13 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "👋 Merhaba! Ben ChemMind AI, senin kişisel laboratuvar asistanınım. Sol menüden bilgilerini doldurup deney konunu seçtiysen başlayabiliriz. Bugün aklında nasıl bir deney tasarımı var veya hangi konuda yardıma ihtiyacın var?"}
     ]
 
+# --- SOHBET HAFIZASI VE GEÇMİŞ SOHBETLER ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+# YENİ: Geçmiş sohbetleri tutacağımız hafıza listesi
+if "past_chats" not in st.session_state:
+    st.session_state.past_chats = []
+
 # --- SIDEBAR: ÖĞRENCİ BİLGİLERİ VE BUTONLAR ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3022/3022607.png", width=80)
@@ -60,45 +67,71 @@ with st.sidebar:
     
     st.divider()
     
-    # YENİ: Seçimi Onaylama Butonu
+    # Seçimi Onaylama Butonu
     if st.button("✅ Seçimi Onayla ve Başla", use_container_width=True):
-        # Sağ alttan çıkan şık bildirim
         st.toast(f"{exp_title} konusu aktif edildi!", icon="🎯")
-        
-        # Yapay zekanın ilk mesajını öğrenciye ve seçtiği konuya özel olarak ayarla
         isim_hitap = f" {std_name}" if std_name else ""
         st.session_state.messages = [
             {"role": "assistant", "content": f"👋 Merhaba{isim_hitap}! **{exp_title}** konusunu seçtiğini görüyorum. Harika bir seçim. Bu konuyla ilgili bir deney mi tasarlamak istersin, yoksa kafana takılan teorik bir kavramı mı tartışalım?"}
         ]
-        st.rerun() # Ekranı yenile
+        st.rerun()
         
     st.divider()
+
+    # --- YENİ: GEÇMİŞ SOHBETLER PANELİ ---
+    with st.expander("📂 Geçmiş Sohbetlerim", expanded=False):
+        if len(st.session_state.past_chats) == 0:
+            st.info("Henüz arşivlenmiş sohbetin yok.")
+        else:
+            for idx, chat in enumerate(st.session_state.past_chats):
+                # Arşivdeki sohbete tıklanınca onu ekrana geri yükle
+                if st.button(f"🕒 {chat['tarih']} - {chat['konu']}", key=f"past_{idx}", use_container_width=True):
+                    st.session_state.messages = chat['mesajlar']
+                    st.toast("Arşivdeki sohbet yüklendi!", icon="📂")
+                    st.rerun()
+
+    st.divider()
     
-    # Temizle ve Kaydet Butonları (Yan yana)
+    # --- TEMİZLE VE ARŞİVLE BUTONLARI ---
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Temizle"):
+        if st.button("🗑️ Temizle", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
 
     with col2:
-        if st.session_state.messages:
-            data = {
-                "Zaman": [datetime.now().strftime("%Y-%m-%d %H:%M")],
-                "Ogrenci": [std_name],
-                "No": [std_id],
-                "Konu": [exp_title],
-                "Sohbet_Gecmisi": [str(st.session_state.messages)]
-            }
-            df = pd.DataFrame(data)
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            
-            st.download_button(
-                label="💾 Kaydet",
-                data=csv,
-                file_name=f"{std_id}_sohbet_kaydi.csv",
-                mime="text/csv"
-            )
+        if st.button("📁 Arşivle", use_container_width=True):
+            if st.session_state.messages:
+                # Mevcut sohbeti arşiv listesine ekle
+                st.session_state.past_chats.append({
+                    "tarih": datetime.now().strftime("%H:%M"),
+                    "konu": exp_title,
+                    "mesajlar": st.session_state.messages.copy()
+                })
+                # Ekranı yeni sohbet için temizle
+                st.session_state.messages = []
+                st.toast("Sohbet başarıyla arşive kaldırıldı!", icon="✅")
+                st.rerun()
+
+    # --- EXCEL İNDİRME BUTONU ---
+    if st.session_state.messages:
+        data = {
+            "Zaman": [datetime.now().strftime("%Y-%m-%d %H:%M")],
+            "Ogrenci": [std_name],
+            "No": [std_id],
+            "Konu": [exp_title],
+            "Sohbet_Gecmisi": [str(st.session_state.messages)]
+        }
+        df = pd.DataFrame(data)
+        csv = df.to_csv(index=False).encode('utf-8-sig')
+        
+        st.download_button(
+            label="📥 Excel Olarak İndir (Tez İçin)",
+            data=csv,
+            file_name=f"{std_id}_sohbet_kaydi.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
 
 # --- SİSTEM TALİMATI (GENİŞLETİLMİŞ VE ÇOK YÖNLÜ ÖĞRETMEN) ---
 sistem_promptu = f"""
@@ -121,7 +154,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Sohbet girişi
-if prompt := st.chat_input("Yaz gitsin, çözeriz (büyük ihtimalle) 🤓..."):
+if prompt := st.chat_input("Yaz gitsin, çözeriz (büyük ihtimalle)"):
     # 1. Kullanıcı mesajını kaydet ve göster
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
