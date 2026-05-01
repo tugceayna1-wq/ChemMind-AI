@@ -168,34 +168,31 @@ if not st.session_state.logged_in:
             r_email = st.text_input("E-Posta Adresiniz (Giriş için):")
             r_pass = st.text_input("Bir Şifre Belirleyin:", type="password")
             
-            if st.form_submit_button("Kayıt Ol", use_container_width=True):
-                # E-posta veritabanında var mı kontrolü
-                check_email = supabase.table("kullanicilar").select("*").eq("eposta", r_email.lower()).execute()
+           if st.form_submit_button("Kayıt Ol", use_container_width=True):
+                # İŞTE SİHİRLİ SATIR: Numara girildiyse onu al, girilmediyse e-postayı numara yap!
+                final_no = r_no.strip() if r_no.strip() else r_email.lower()
                 
-                # Numara kontrolü (Sadece numara yazılmışsa)
-                check_no_exists = False
-                if r_no.strip():
-                    res_no = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
-                    if len(res_no.data) > 0:
-                        check_no_exists = True
+                # Veritabanında çakışma var mı diye kontrol et
+                check_no = supabase.table("kullanicilar").select("*").eq("ogrenci_no", final_no).execute()
+                check_email = supabase.table("kullanicilar").select("*").eq("eposta", r_email.lower()).execute()
 
-                if check_no_exists:
-                    st.error("Bu öğrenci numarası zaten sistemde kayıtlı!")
+                if len(check_no.data) > 0:
+                    st.error("Bu numara (veya e-posta) zaten sistemde kayıtlı!")
                 elif len(check_email.data) > 0:
                     st.error("Bu e-posta zaten kullanımda!")
                 elif "@" not in r_email:
-                    st.error("Geçerli bir e-posta adresi girin!")
+                    st.error("Lütfen geçerli bir e-posta adresi girin!")
                 elif len(r_name) < 2 or len(r_pass) < 3:
-                    st.error("Lütfen adınızı ve şifrenizi girin!")
+                    st.error("Lütfen adınızı ve şifrenizi eksiksiz girin!")
                 else:
-                    # KAYIT: Boş numara None olarak gider
+                    # Supabase'e gönder
                     supabase.table("kullanicilar").insert({
-                        "ogrenci_no": r_no.strip() if r_no.strip() else None, 
+                        "ogrenci_no": final_no, # Artık burası asla boş gitmiyor!
                         "ad_soyad": r_name, 
                         "eposta": r_email.lower(), 
                         "sifre": r_pass
                     }).execute()
-                    st.success("Kayıt başarılı! Şimdi e-postanız ile giriş yapabilirsiniz.")
+                    st.success("Harika! Kayıt başarılı. Şimdi 'Giriş Yap' sekmesinden e-postanız ile girebilirsiniz.")
     st.stop()
 
 # --- ANA UYGULAMA ---
