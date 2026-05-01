@@ -245,7 +245,7 @@ if prompt := st.chat_input("Laboratuvar asistanına bir şey sor..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Asistanınız düşünüyor..."):
+        with st.spinner("ChemMind düşünüyor..."):
             try:
                 response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
                 st.markdown(response.text)
