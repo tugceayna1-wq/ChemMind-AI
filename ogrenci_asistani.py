@@ -156,7 +156,7 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     st.error("Hatalı numara veya şifre!")
-   with tab2:
+    with tab2:
         with st.form("register_form"):
             r_no = st.text_input("Öğrenci Numaranız (Raporlar için):")
             r_name = st.text_input("Adınız ve Soyadınız:")
