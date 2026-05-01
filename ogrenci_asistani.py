@@ -1,4 +1,4 @@
-import streamlit as st
+ci import streamlit as st
 import google.generativeai as genai
 from datetime import datetime, timedelta
 import time
@@ -102,6 +102,28 @@ def mail_gonder(doc_buffer, ogrenci_ad, konu):
         return True, "Rapor başarıyla e-postalandı!"
     except Exception as e:
         return False, f"Mail Hatası: {str(e)}"
+
+def sifre_hatirlat_mail(alici_mail, sifre, ad):
+    try:
+        sender = st.secrets["EMAIL_SENDER"]
+        password = st.secrets["EMAIL_PASSWORD"]
+        
+        msg = MIMEMultipart()
+        msg['From'] = sender
+        msg['To'] = alici_mail
+        msg['Subject'] = "ChemMind AI - Şifre Hatırlatma"
+        
+        govde = f"Merhaba {ad},\n\nChemMind AI laboratuvarı için mevcut şifreniz: {sifre}\n\nLütfen şifrenizi kimseyle paylaşmayın. İyi çalışmalar dileriz!"
+        msg.attach(MIMEText(govde, 'plain'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender, password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        return False
 
 # --- OTOMATİK GİRİŞ KONTROLÜ ---
 cerez_ogrenci_no = cookie_manager.get(cookie="chem_user")
@@ -258,4 +280,4 @@ if prompt := st.chat_input("ChemMind' a bir şey sor..."):
                 st.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
-                st.error("Google Gemini geçici olarak meşgul. Lütfen 1-2 dakika sonra tekrar deneyin.")
+                st.error("Google Gemini geçiolarak meşgul. Lütfen 1-2 dakika sonra tekrar deneyin.")
