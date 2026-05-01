@@ -222,7 +222,8 @@ with st.sidebar:
             if ok: st.toast(msg, icon="✅")
             else: st.error(msg)
 
-   st.divider()
+    st.divider()
+    
     if st.button("🚪 Çıkış Yap", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.user_info = None
