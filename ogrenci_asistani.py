@@ -14,10 +14,18 @@ st.set_page_config(page_title="ChemMind AI - Pro", page_icon="🧪", layout="wid
 st.markdown("""
     <style>
     .stAlert { border-radius: 10px; }
+    .report-box { 
+        background-color: #ffffff; 
+        padding: 20px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 15px;
+        border-left: 8px solid #28a745;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # --- ÇEREZ (COOKIE) YÖNETİCİSİ ---
+# Hata vermeyen, düzeltilmiş çerez yöneticisi
 cookie_manager = stx.CookieManager()
 
 # --- VERİTABANI (SUPABASE) BAĞLANTISI ---
@@ -33,7 +41,7 @@ supabase = init_supabase()
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
-    API_KEY = ""
+    API_KEY = "BURAYA_GECICI_OLARAK_ANAHTARINI_YAZABILIRSIN"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
@@ -48,7 +56,6 @@ if "current_subject" not in st.session_state:
     st.session_state.current_subject = "Genel"
 
 # --- OTOMATİK GİRİŞ (ÇEREZ KONTROLÜ) ---
-# Eğer kullanıcı sayfayı yenilediyse ama çerezi duruyorsa onu otomatik içeri alıyoruz
 cerez_ogrenci_no = cookie_manager.get(cookie="chem_user")
 if cerez_ogrenci_no and not st.session_state.logged_in:
     res = supabase.table("kullanicilar").select("*").eq("ogrenci_no", cerez_ogrenci_no).execute()
@@ -60,11 +67,13 @@ if cerez_ogrenci_no and not st.session_state.logged_in:
 # --- GİRİŞ VE KAYIT EKRANI ---
 if not st.session_state.logged_in:
     st.title("🧪 ChemMind AI Laboratuvarına Hoş Geldiniz")
+    st.markdown("Lütfen laboratuvara girmek için öğrenci kimliğinizi doğrulayın.")
     
     tab1, tab2 = st.tabs(["🔑 Giriş Yap", "📝 Yeni Kayıt Ol"])
     
     with tab1:
         with st.form("login_form"):
+            st.subheader("Mevcut Hesaba Giriş")
             l_no = st.text_input("Öğrenci Numaranız:")
             l_pass = st.text_input("Şifreniz:", type="password")
             submitted = st.form_submit_button("Laboratuvara Gir", use_container_width=True)
@@ -74,28 +83,31 @@ if not st.session_state.logged_in:
                 if len(res.data) > 0:
                     st.session_state.logged_in = True
                     st.session_state.user_info = res.data[0]
-                    # Giriş başarılıysa öğrencinin bilgisini tarayıcıya 30 günlük kaydediyoruz
                     cookie_manager.set("chem_user", l_no, expires_at=datetime.now() + timedelta(days=30))
                     st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error("Hatalı numara veya şifre!")
+                    st.error("Öğrenci numarası veya şifre hatalı!")
 
     with tab2:
         with st.form("register_form"):
+            st.subheader("Yeni Öğrenci Kaydı")
             r_no = st.text_input("Öğrenci Numaranız:")
             r_name = st.text_input("Adınız ve Soyadınız:")
-            r_pass = st.text_input("Şifre Belirleyin:", type="password")
+            r_pass = st.text_input("Bir Şifre Belirleyin:", type="password")
             r_submitted = st.form_submit_button("Kayıt Ol", use_container_width=True)
             
             if r_submitted:
-                check = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
-                if len(check.data) > 0:
-                    st.error("Bu numara zaten kayıtlı!")
+                if len(r_no) < 3 or len(r_name) < 3 or len(r_pass) < 3:
+                    st.warning("Lütfen tüm alanları eksiksiz doldurun.")
                 else:
-                    supabase.table("kullanicilar").insert({"ogrenci_no": r_no, "ad_soyad": r_name, "sifre": r_pass}).execute()
-                    st.success("Kayıt başarılı! 'Giriş Yap' sekmesinden girebilirsiniz.")
+                    check = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
+                    if len(check.data) > 0:
+                        st.error("Bu öğrenci numarası zaten sisteme kayıtlı!")
+                    else:
+                        supabase.table("kullanicilar").insert({"ogrenci_no": r_no, "ad_soyad": r_name, "sifre": r_pass}).execute()
+                        st.success("Kayıt başarılı! Şimdi 'Giriş Yap' sekmesinden sisteme girebilirsiniz.")
     
     st.stop()
 
@@ -103,14 +115,30 @@ if not st.session_state.logged_in:
 ogrenci = st.session_state.user_info
 
 with st.sidebar:
+    # Eski havalı laboratuvar logomuzu geri getirdik!
+    st.image("https://cdn-icons-png.flaticon.com/512/1046/1046269.png", width=150)
     st.title(f"🎓 Merhaba, {ogrenci['ad_soyad'].split()[0]}")
+    st.caption(f"Öğrenci No: {ogrenci['ogrenci_no']}")
     st.divider()
     
-    # KONU SEÇİMİ
-    exp_title = st.selectbox("Konu Başlığı Seçin:", ["Atom ve Periyodik Sistem", "Kimyasal Bağlar", "Kimyasal Hesaplamalar", "Maddenin Halleri", "Sıvı Çözeltiler", "Tepkimelerde Enerji"])
-    if st.button("✅ Konuyu Onayla", use_container_width=True):
+    exp_title = st.selectbox("Konu Başlığı Seçin:", [
+        "Atom ve Periyodik Sistem",
+        "Kimyasal Bağlar ve Molekül Geometrisi",
+        "Kimyasal Hesaplamalar",
+        "Maddenin Halleri",
+        "Sıvı Çözeltiler ve Çözünürlük",
+        "Kimyasal Tepkimelerde Enerji",
+        "Kimyasal Tepkimelerde Hız",
+        "Kimyasal Tepkimelerde Denge",
+        "Asitler-Bazlar-Tuzlar",
+        "Elektrokimya"
+    ])
+    
+    if st.button("✅ Seçimi Onayla ve Başla", use_container_width=True):
         st.session_state.current_subject = exp_title
-        st.session_state.messages = [{"role": "assistant", "content": f"👋 {ogrenci['ad_soyad']}, **{exp_title}** konusuna hoş geldin! Nasıl yardımcı olabilirim?"}]
+        st.session_state.messages = [
+            {"role": "assistant", "content": f"👋 Merhaba {ogrenci['ad_soyad']}! **{exp_title}** konusunu seçtiğini görüyorum. Harika bir seçim. Bu konuyla ilgili bir deney mi tasarlamak istersin, yoksa kafana takılan teorik bir kavramı mı tartışalım?"}
+        ]
         st.rerun()
         
     st.divider()
@@ -119,41 +147,53 @@ with st.sidebar:
     col1, col2 = st.columns(2)
     with col1:
         if st.button("➕ Yeni Sohbet", use_container_width=True):
-            st.session_state.messages = [{"role": "assistant", "content": f"👋 Yeni bir sohbete başladık. Konumuz: {st.session_state.current_subject}. Seni dinliyorum!"}]
+            st.session_state.messages = [
+                {"role": "assistant", "content": f"👋 Tertemiz yeni bir sayfa açtık! Konumuz hala **{st.session_state.current_subject}**. Seni dinliyorum!"}
+            ]
             st.rerun()
 
     with col2:
         if st.button("💾 Sohbeti Kaydet", use_container_width=True):
-            if len(st.session_state.messages) > 1:
-                yeni_kayit = {"ogrenci_no": ogrenci['ogrenci_no'], "konu": st.session_state.current_subject, "mesajlar": st.session_state.messages}
+            if len(st.session_state.messages) > 0:
+                yeni_kayit = {
+                    "ogrenci_no": ogrenci['ogrenci_no'],
+                    "konu": st.session_state.current_subject,
+                    "mesajlar": st.session_state.messages
+                }
                 supabase.table("sohbetler").insert(yeni_kayit).execute()
-                st.toast("Sohbet veritabanına kaydedildi!", icon="✅")
+                st.toast("Sohbet başarıyla veritabanına kaydedildi!", icon="✅")
             else:
                 st.warning("Kaydedilecek mesaj yok!")
 
     st.divider()
 
-    # GEÇMİŞ SOHBETLER
     with st.expander("📂 Geçmiş Sohbetlerim", expanded=False):
         past_chats_res = supabase.table("sohbetler").select("*").eq("ogrenci_no", ogrenci['ogrenci_no']).order('kayit_tarihi', desc=True).execute()
         past_chats = past_chats_res.data
+        
         if len(past_chats) == 0:
-            st.info("Kayıtlı sohbet yok.")
+            st.info("Henüz kaydedilmiş sohbetiniz yok.")
         else:
             for chat in past_chats:
-                tarih = chat['kayit_tarihi'].split("T")[0]
-                if st.button(f"🕒 {tarih} - {chat['konu']}", key=f"chat_{chat['id']}", use_container_width=True):
+                tarih_str = chat['kayit_tarihi'].split("T")[0]
+                if st.button(f"🕒 {tarih_str} - {chat['konu']}", key=f"chat_{chat['id']}", use_container_width=True):
                     st.session_state.messages = chat['mesajlar']
                     st.session_state.current_subject = chat['konu']
+                    st.toast("Arşivdeki sohbet yüklendi!", icon="📂")
                     st.rerun()
 
     st.divider()
 
     # WORD OLUŞTURMA
-    if len(st.session_state.messages) > 1:
+    if st.session_state.messages:
         doc = Document()
-        doc.add_heading('ChemMind AI - Öğrenci Raporu', 0)
-        doc.add_paragraph(f"Öğrenci: {ogrenci['ad_soyad']} ({ogrenci['ogrenci_no']})\nKonu: {st.session_state.current_subject}\nTarih: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        doc.add_heading('ChemMind AI - Öğrenci Sohbet Raporu', 0)
+        doc.add_paragraph(f"Öğrenci Adı: {ogrenci['ad_soyad']}")
+        doc.add_paragraph(f"Öğrenci No: {ogrenci['ogrenci_no']}")
+        doc.add_paragraph(f"Çalışılan Konu: {st.session_state.current_subject}")
+        doc.add_paragraph(f"Rapor Tarihi: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        
+        doc.add_heading('Sohbet Geçmişi', level=1)
         for msg in st.session_state.messages:
             role_name = "Öğrenci" if msg["role"] == "user" else "ChemMind AI"
             p = doc.add_paragraph()
@@ -164,7 +204,13 @@ with st.sidebar:
         doc.save(buffer)
         buffer.seek(0)
         
-        st.download_button("📄 Word Olarak İndir", data=buffer, file_name=f"{ogrenci['ad_soyad']}_Rapor.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+        st.download_button(
+            label="📄 Word Olarak İndir",
+            data=buffer,
+            file_name=f"{ogrenci['ad_soyad']}_{st.session_state.current_subject}_Raporu.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
 
     st.divider()
     
@@ -176,23 +222,33 @@ with st.sidebar:
         cookie_manager.delete("chem_user")
         st.rerun()
 
-# --- SOHBET EKRANI ---
-sistem_promptu = f"Sen bir Kimya Öğretmenisin. Öğrenci: {ogrenci['ad_soyad']}. Konu: {st.session_state.current_subject}. Cevapları direkt verme, sorgulat."
+# --- SİSTEM TALİMATI ---
+sistem_promptu = f"""
+Sen destekleyici, zeki ve deneyimli bir Kimya Öğretmenisin. Karşındaki öğrencinin adı {ogrenci['ad_soyad']}.
+Şu an tartıştığınız konu: '{st.session_state.current_subject}'.
+Öğrencinin öğrenmesine rehberlik et, cevapları doğrudan vermek yerine sorgulat.
+"""
 
-st.title("🔬 ChemMind AI: Laboratuvar")
+# --- SOHBET EKRANI ---
+# Başlığı eski havalı haline getirdik
+st.title("🔬 ChemMind AI: İnteraktif Laboratuvar")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Mesajınızı yazın..."):
+# Giriş kutusunu eski haline getirdik
+if prompt := st.chat_input("Laboratuvar asistanına bir şey sor..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Asistan düşünüyor..."):
-            response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci: {prompt}")
-            st.markdown(response.text)
+        # Yükleniyor yazısını eski haline getirdik
+        with st.spinner("Asistanınız düşünüyor..."):
+            time.sleep(1) 
+            response = model.generate_content(f"{sistem_promptu}\n\nÖğrenci Mesajı: {prompt}")
+            full_response = response.text
+            st.markdown(full_response)
     
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
