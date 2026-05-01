@@ -156,18 +156,33 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     st.error("Hatalı numara veya şifre!")
-    with tab2:
+   with tab2:
         with st.form("register_form"):
-            r_no = st.text_input("Öğrenci Numaranız:")
+            r_no = st.text_input("Öğrenci Numaranız (Raporlar için):")
             r_name = st.text_input("Adınız ve Soyadınız:")
+            r_email = st.text_input("E-Posta Adresiniz (Giriş yapmak ve şifre için):") # YENİ SATIR
             r_pass = st.text_input("Bir Şifre Belirleyin:", type="password")
+            
             if st.form_submit_button("Kayıt Ol", use_container_width=True):
-                check = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
-                if len(check.data) > 0:
-                    st.error("Bu numara zaten kayıtlı!")
+                # Veritabanında kontrol
+                check_no = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
+                check_email = supabase.table("kullanicilar").select("*").eq("eposta", r_email.lower()).execute()
+                
+                if len(check_no.data) > 0:
+                    st.error("Bu öğrenci numarası zaten kayıtlı!")
+                elif len(check_email.data) > 0:
+                    st.error("Bu e-posta zaten kullanımda!")
+                elif "@" not in r_email:
+                    st.error("Geçerli bir e-posta adresi girin!")
                 else:
-                    supabase.table("kullanicilar").insert({"ogrenci_no": r_no, "ad_soyad": r_name, "sifre": r_pass}).execute()
-                    st.success("Kayıt başarılı! Giriş Yap sekmesinden girebilirsiniz.")
+                    # Supabase'e kayıt (yeni eposta sütunuyla beraber)
+                    supabase.table("kullanicilar").insert({
+                        "ogrenci_no": r_no, 
+                        "ad_soyad": r_name, 
+                        "eposta": r_email.lower(), 
+                        "sifre": r_pass
+                    }).execute()
+                    st.success("Kayıt başarılı! Giriş Yap sekmesine geçebilirsiniz.")
     st.stop()
 
 # --- ANA UYGULAMA ---
