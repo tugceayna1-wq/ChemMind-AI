@@ -25,10 +25,10 @@ st.markdown("""
     /* En alttaki 'Made with Streamlit' yazısını gizle */
     footer {visibility: hidden;}
     
-    /* Üst menüden GitHub ve Share butonlarını gizle, SADECE 3 Nokta menüsünü (Tema ayarını) bırak */
-    [data-testid="stToolbar"] > div:not(:last-child) {
-        display: none !important;
-    }
+    /* Streamlit'in zorla eklediği Fork, Deploy ve GitHub linklerini keskin nişancı gibi gizle */
+    .stDeployButton {display: none !important;}
+    [data-testid="stToolbar"] a {display: none !important;}
+    
     </style>
     """, unsafe_allow_html=True)
 
