@@ -70,6 +70,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "current_subject" not in st.session_state:
     st.session_state.current_subject = "Genel"
+if "force_logout" not in st.session_state:
+    st.session_state.force_logout = False
 
 # --- MAİL GÖNDERME FONKSİYONU ---
 def mail_gonder(doc_buffer, ogrenci_ad, konu):
@@ -103,7 +105,7 @@ def mail_gonder(doc_buffer, ogrenci_ad, konu):
 
 # --- OTOMATİK GİRİŞ KONTROLÜ ---
 cerez_ogrenci_no = cookie_manager.get(cookie="chem_user")
-if cerez_ogrenci_no and not st.session_state.logged_in:
+if cerez_ogrenci_no and not st.session_state.logged_in and not st.session_state.force_logout:
     res = supabase.table("kullanicilar").select("*").eq("ogrenci_no", cerez_ogrenci_no).execute()
     if len(res.data) > 0:
         st.session_state.logged_in = True
@@ -125,6 +127,7 @@ if not st.session_state.logged_in:
                 if len(res.data) > 0:
                     st.session_state.logged_in = True
                     st.session_state.user_info = res.data[0]
+                    st.session_state.force_logout = False
                     cookie_manager.set("chem_user", l_no, expires_at=datetime.now() + timedelta(days=30))
                     st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
                     time.sleep(1)
@@ -225,12 +228,11 @@ with st.sidebar:
     st.divider()
     
     if st.button("🚪 Çıkış Yap", use_container_width=True):
+        st.session_state.force_logout = True
         st.session_state.logged_in = False
         st.session_state.user_info = None
         st.session_state.messages = []
-        # Çerezi silmek bazen yetmiyor, o yüzden zorla "boş" değer atıyoruz!
-        cookie_manager.set("chem_user", "", expires_at=datetime.now())
-        time.sleep(0.5) # Sistemin çerezi silmesi için yarım saniye süre veriyoruz
+        cookie_manager.delete("chem_user")
         st.rerun()
 
 # --- SİSTEM TALİMATI ---
