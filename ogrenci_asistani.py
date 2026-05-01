@@ -25,13 +25,16 @@ st.markdown("""
     /* En alttaki 'Made with Streamlit' yazısını gizle */
     footer {visibility: hidden;}
     
-    /* Streamlit'in zorla eklediği Fork, Deploy ve GitHub linklerini keskin nişancı gibi gizle */
+    /* Streamlit Cloud İnatçı Butonlarını Yok Etme (Sadece 3 Nokta Kalacak) */
     .stDeployButton {display: none !important;}
+    [data-testid="manage-app-button"] {display: none !important;}
+    [data-testid="stToolbarActionButton"] {display: none !important;}
     [data-testid="stToolbar"] a {display: none !important;}
+    .viewerBadge_container__1QSob {display: none !important;}
+    .viewerBadge_link__1S137 {display: none !important;}
     
     </style>
     """, unsafe_allow_html=True)
-
 # --- ÇEREZ (COOKIE) YÖNETİCİSİ ---
 # Hata vermeyen, düzeltilmiş çerez yöneticisi
 cookie_manager = stx.CookieManager()
