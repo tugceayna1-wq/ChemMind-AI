@@ -22,11 +22,13 @@ st.markdown("""
         border-left: 8px solid #28a745;
     }
     
-    /* SAĞ ÜST MENÜYÜ, GITHUB İKONUNU VE FOOTER'I GİZLEME KODLARI */
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
+    /* En alttaki 'Made with Streamlit' yazısını gizle */
     footer {visibility: hidden;}
     
+    /* Üst menüden GitHub ve Share butonlarını gizle, SADECE 3 Nokta menüsünü (Tema ayarını) bırak */
+    [data-testid="stToolbar"] > div:not(:last-child) {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
