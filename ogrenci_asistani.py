@@ -222,10 +222,14 @@ with st.sidebar:
             if ok: st.toast(msg, icon="✅")
             else: st.error(msg)
 
-    st.divider()
+   st.divider()
     if st.button("🚪 Çıkış Yap", use_container_width=True):
         st.session_state.logged_in = False
-        cookie_manager.delete("chem_user")
+        st.session_state.user_info = None
+        st.session_state.messages = []
+        # Çerezi silmek bazen yetmiyor, o yüzden zorla "boş" değer atıyoruz!
+        cookie_manager.set("chem_user", "", expires_at=datetime.now())
+        time.sleep(0.5) # Sistemin çerezi silmesi için yarım saniye süre veriyoruz
         st.rerun()
 
 # --- SİSTEM TALİMATI ---
