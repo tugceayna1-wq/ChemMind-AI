@@ -142,20 +142,25 @@ if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["🔑 Giriş Yap", "📝 Yeni Kayıt Ol"])
     with tab1:
         with st.form("login_form"):
-            l_no = st.text_input("Öğrenci Numaranız:")
+            l_email = st.text_input("E-Posta Adresiniz:") # l_no yerine l_email oldu
             l_pass = st.text_input("Şifreniz:", type="password")
             if st.form_submit_button("Laboratuvara Gir", use_container_width=True):
-                res = supabase.table("kullanicilar").select("*").eq("ogrenci_no", l_no).eq("sifre", l_pass).execute()
+                # Sorgu artık e-posta üzerinden yapılıyor
+                res = supabase.table("kullanicilar").select("*").eq("eposta", l_email.lower()).eq("sifre", l_pass).execute()
+                
                 if len(res.data) > 0:
                     st.session_state.logged_in = True
                     st.session_state.user_info = res.data[0]
-                    st.session_state.force_logout = False
-                    cookie_manager.set("chem_user", l_no, expires_at=datetime.now() + timedelta(days=30))
-                    st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
-                    time.sleep(1)
+                    st.session_state.force_logout = False 
+                    
+                    # Otomatik giriş çerezi için yine benzersiz olan ogrenci_no'yu kullanalım
+                    cookie_manager.set("chem_user", res.data[0]["ogrenci_no"], expires_at=datetime.now() + timedelta(days=30))
+                    
+                    st.success("Giriş başarılı! Laboratuvara hoş geldiniz.")
+                    time.sleep(0.5)
                     st.rerun()
                 else:
-                    st.error("Hatalı numara veya şifre!")
+                    st.error("Hatalı e-posta adresi veya şifre!")
     with tab2:
         with st.form("register_form"):
             r_no = st.text_input("Öğrenci Numaranız (Raporlar için):")
