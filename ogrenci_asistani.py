@@ -65,7 +65,6 @@ if not st.session_state.logged_in:
             submitted = st.form_submit_button("Laboratuvara Gir", use_container_width=True)
             
             if submitted:
-                # Supabase'den kullanıcıyı kontrol et
                 res = supabase.table("kullanicilar").select("*").eq("ogrenci_no", l_no).eq("sifre", l_pass).execute()
                 if len(res.data) > 0:
                     st.session_state.logged_in = True
@@ -88,16 +87,14 @@ if not st.session_state.logged_in:
                 if len(r_no) < 3 or len(r_name) < 3 or len(r_pass) < 3:
                     st.warning("Lütfen tüm alanları eksiksiz doldurun.")
                 else:
-                    # Numara daha önce kayıtlı mı kontrol et
                     check = supabase.table("kullanicilar").select("*").eq("ogrenci_no", r_no).execute()
                     if len(check.data) > 0:
                         st.error("Bu öğrenci numarası zaten sisteme kayıtlı!")
                     else:
-                        # Yeni öğrenciyi kaydet
                         supabase.table("kullanicilar").insert({"ogrenci_no": r_no, "ad_soyad": r_name, "sifre": r_pass}).execute()
                         st.success("Kayıt başarılı! Şimdi 'Giriş Yap' sekmesinden sisteme girebilirsiniz.")
     
-    st.stop() # Giriş yapılmadıysa uygulamanın geri kalanını çalıştırma
+    st.stop() 
 
 # --- ANA UYGULAMA (GİRİŞ YAPILDIYSA ÇALIŞIR) ---
 ogrenci = st.session_state.user_info
@@ -130,35 +127,20 @@ with st.sidebar:
         
     st.divider()
 
-    # GEÇMİŞ SOHBETLERİ VERİTABANINDAN ÇEKME
-    with st.expander("📂 Geçmiş Sohbetlerim", expanded=False):
-        past_chats_res = supabase.table("sohbetler").select("*").eq("ogrenci_no", ogrenci['ogrenci_no']).order('kayit_tarihi', desc=True).execute()
-        past_chats = past_chats_res.data
-        
-        if len(past_chats) == 0:
-            st.info("Henüz kaydedilmiş sohbetiniz yok.")
-        else:
-            for chat in past_chats:
-                # Tarihi düzeltelim
-                tarih_str = chat['kayit_tarihi'].split("T")[0]
-                if st.button(f"🕒 {tarih_str} - {chat['konu']}", key=f"chat_{chat['id']}", use_container_width=True):
-                    st.session_state.messages = chat['mesajlar']
-                    st.session_state.current_subject = chat['konu']
-                    st.toast("Arşivdeki sohbet yüklendi!", icon="📂")
-                    st.rerun()
-
-    st.divider()
-    
+    # --- YENİ EKLENEN BUTONLAR BURADA ---
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Temizle", use_container_width=True):
+        if st.button("➕ Yeni Sohbet", use_container_width=True):
+            # Sadece mesajları sıfırlarız, kullanıcı giriş yapmış olarak kalır!
             st.session_state.messages = []
+            st.session_state.messages.append(
+                {"role": "assistant", "content": f"👋 Tertemiz yeni bir sayfa açtık! Konumuz hala **{st.session_state.current_subject}**. Seni dinliyorum!"}
+            )
             st.rerun()
 
     with col2:
-        if st.button("💾 Buluta Kaydet", use_container_width=True):
+        if st.button("💾 Sohbeti Kaydet", use_container_width=True):
             if len(st.session_state.messages) > 0:
-                # Sohbeti veritabanına kaydet!
                 yeni_kayit = {
                     "ogrenci_no": ogrenci['ogrenci_no'],
                     "konu": st.session_state.current_subject,
@@ -168,6 +150,26 @@ with st.sidebar:
                 st.toast("Sohbet başarıyla veritabanına kaydedildi!", icon="✅")
             else:
                 st.warning("Kaydedilecek mesaj yok!")
+    # ------------------------------------
+
+    st.divider()
+
+    with st.expander("📂 Geçmiş Sohbetlerim", expanded=False):
+        past_chats_res = supabase.table("sohbetler").select("*").eq("ogrenci_no", ogrenci['ogrenci_no']).order('kayit_tarihi', desc=True).execute()
+        past_chats = past_chats_res.data
+        
+        if len(past_chats) == 0:
+            st.info("Henüz kaydedilmiş sohbetiniz yok.")
+        else:
+            for chat in past_chats:
+                tarih_str = chat['kayit_tarihi'].split("T")[0]
+                if st.button(f"🕒 {tarih_str} - {chat['konu']}", key=f"chat_{chat['id']}", use_container_width=True):
+                    st.session_state.messages = chat['mesajlar']
+                    st.session_state.current_subject = chat['konu']
+                    st.toast("Arşivdeki sohbet yüklendi!", icon="📂")
+                    st.rerun()
+
+    st.divider()
 
     # --- WORD İNDİRME BUTONU ---
     if st.session_state.messages:
