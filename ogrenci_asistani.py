@@ -168,7 +168,7 @@ if not st.session_state.logged_in:
             r_email = st.text_input("E-Posta Adresiniz (Giriş için):")
             r_pass = st.text_input("Bir Şifre Belirleyin:", type="password")
             
-           if st.form_submit_button("Kayıt Ol", use_container_width=True):
+            if st.form_submit_button("Kayıt Ol", use_container_width=True):
                 # İŞTE SİHİRLİ SATIR: Numara girildiyse onu al, girilmediyse e-postayı numara yap!
                 final_no = r_no.strip() if r_no.strip() else r_email.lower()
                 
