@@ -25,13 +25,9 @@ st.markdown("""
     /* En alttaki 'Made with Streamlit' yazısını gizle */
     footer {visibility: hidden;}
     
-    /* Streamlit Cloud İnatçı Butonlarını Yok Etme (Sadece 3 Nokta Kalacak) */
+    /* Üst menü butonlarını temizle */
     .stDeployButton {display: none !important;}
-    [data-testid="manage-app-button"] {display: none !important;}
-    [data-testid="stToolbarActionButton"] {display: none !important;}
     [data-testid="stToolbar"] a {display: none !important;}
-    .viewerBadge_container__1QSob {display: none !important;}
-    .viewerBadge_link__1S137 {display: none !important;}
     
     </style>
     """, unsafe_allow_html=True)
