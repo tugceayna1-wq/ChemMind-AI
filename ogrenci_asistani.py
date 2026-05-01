@@ -232,14 +232,14 @@ with st.sidebar:
 sistem_promptu = f"Sen destekleyici bir Kimya Öğretmenisin. Öğrenci: {ogrenci['ad_soyad']}. Konu: '{st.session_state.current_subject}'. Cevapları doğrudan vermek yerine sorgulat."
 
 # --- SOHBET EKRANI ---
-st.title("🔬 ChemMind AI: İnteraktif Laboratuvar")  # Başlık düzeltildi!
+st.title("🔬 ChemMind AI: İnteraktif Kimya Laboratuvarı")  # Başlık düzeltildi!
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Mesaj kutusu yazısı düzeltildi!
-if prompt := st.chat_input("Laboratuvar asistanına bir şey sor..."):
+if prompt := st.chat_input("ChemMind' a bir şey sor..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
