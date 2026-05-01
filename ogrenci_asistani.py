@@ -18,11 +18,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- ÇEREZ (COOKIE) YÖNETİCİSİ ---
-@st.cache_resource
-def get_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_manager()
+cookie_manager = stx.CookieManager()
 
 # --- VERİTABANI (SUPABASE) BAĞLANTISI ---
 @st.cache_resource
