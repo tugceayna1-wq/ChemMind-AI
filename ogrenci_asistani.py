@@ -21,6 +21,12 @@ st.markdown("""
         border-radius: 15px;
         border-left: 8px solid #28a745;
     }
+    
+    /* SAĞ ÜST MENÜYÜ, GITHUB İKONUNU VE FOOTER'I GİZLEME KODLARI */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
     </style>
     """, unsafe_allow_html=True)
 
