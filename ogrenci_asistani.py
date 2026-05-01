@@ -32,7 +32,6 @@ st.markdown("""
     [data-testid="stToolbar"] a {display: none !important;}
     .viewerBadge_container__1QSob {display: none !important;}
     .viewerBadge_link__1S137 {display: none !important;}
-
     /* Sağ alt köşedeki her şeyi (Taç, Gülen Yüz, Rozet) toptan yok et */
     #manage-app-button {display: none !important;}
     div[class^="viewerBadge"] {display: none !important;}
@@ -40,6 +39,7 @@ st.markdown("""
     
     </style>
     """, unsafe_allow_html=True)
+
 # --- ÇEREZ (COOKIE) YÖNETİCİSİ ---
 # Hata vermeyen, düzeltilmiş çerez yöneticisi
 cookie_manager = stx.CookieManager()
