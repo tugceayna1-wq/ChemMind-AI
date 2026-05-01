@@ -154,7 +154,7 @@ with st.sidebar:
     st.caption(f"Öğrenci No: {ogrenci['ogrenci_no']}")  # Öğrenci numarası geri geldi!
     st.divider()
     
-    exp_title = st.selectbox("Konu Başlığı Seçin:", [
+    exp_title = st.selectbox("Konu Başlığı:", [
         "Atom ve Periyodik Sistem", "Kimyasal Bağlar ve Molekül Geometrisi", "Kimyasal Hesaplamalar",
         "Maddenin Halleri", "Sıvı Çözeltiler ve Çözünürlük", "Kimyasal Tepkimelerde Enerji",
         "Kimyasal Tepkimelerde Hız", "Kimyasal Tepkimelerde Denge", "Asitler-Bazlar-Tuzlar", "Elektrokimya"
